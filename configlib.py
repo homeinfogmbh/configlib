@@ -1,4 +1,4 @@
-"""Extended configuration file parser"""
+"""Configuration file parsing library."""
 
 from os.path import getmtime
 from configparser import ConfigParser
