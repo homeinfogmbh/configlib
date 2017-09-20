@@ -24,12 +24,12 @@ class AlertParser:
 
     @property
     def loaded(self):
-        """Determines whether the configuration has been loaded"""
+        """Determines whether the configuration has been loaded."""
         return self.mtime is not None
 
     @property
     def changed(self):
-        """Determines whether the configuration has changed on disk"""
+        """Determines whether the configuration has changed on disk."""
         return getmtime(self.file) > self.mtime
 
     def load(self, force=False):
@@ -38,7 +38,7 @@ class AlertParser:
             2)  it has not yet been loaded
         or
             3)  the Configuration is set to alert and
-                the file's timestamp changed
+                the file's timestamp changed.
         """
         if force or not self.loaded or self.alert and self.changed:
             self.read(self.file, encoding=self.encoding)
