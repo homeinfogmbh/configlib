@@ -50,7 +50,7 @@ class AlertParser:
 
 
 class INIParser(ConfigParser, AlertParser):
-    """INI-ish configuration file parser."""
+    """Parses INI-ish configuration files."""
 
     def __init__(self, file, encoding=None, alert=False):
         """Invokes super constructors."""
@@ -66,7 +66,7 @@ class INIParser(ConfigParser, AlertParser):
 
 
 class JSONParser(AlertParser):
-    """Parses JSON-ish configuration."""
+    """Parses JSON-ish configuration files."""
 
     def __init__(self, file, encoding=None, alert=False, indent=2):
         """Invokes super constructor and sets inital JSON data."""
