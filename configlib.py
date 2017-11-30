@@ -52,10 +52,10 @@ class AlertParser:
 class INIParser(ConfigParser, AlertParser):
     """Parses INI-ish configuration files."""
 
-    def __init__(self, file, encoding=None, alert=False):
+    def __init__(self, file, encoding=None, alert=False, **kwargs):
         """Invokes super constructors."""
         AlertParser.__init__(self, file, encoding=encoding, alert=alert)
-        super().__init__()
+        super().__init__(**kwargs)
 
     def __getitem__(self, item):
         """Conditionally loads the configuration
