@@ -2,7 +2,7 @@
 
 from os.path import getmtime
 from configparser import ConfigParser
-from json import load, dumps
+from json import load
 
 
 __all__ = ['INIParser', 'JSONParser']
@@ -55,7 +55,7 @@ class INIParser(ConfigParser, AlertParser):
     def __init__(self, file, encoding=None, alert=False, **kwargs):
         """Invokes super constructors."""
         AlertParser.__init__(self, file, encoding=encoding, alert=alert)
-        super().__init__(**kwargs)
+        ConfigParser.__init__(self, **kwargs)
 
     def __getitem__(self, item):
         """Conditionally loads the configuration
@@ -68,18 +68,10 @@ class INIParser(ConfigParser, AlertParser):
 class JSONParser(AlertParser):
     """Parses JSON-ish configuration files."""
 
-    def __init__(self, file, encoding=None, alert=False, indent=2):
+    def __init__(self, file, encoding=None, alert=False):
         """Invokes super constructor and sets inital JSON data."""
         super().__init__(file, encoding=encoding, alert=alert)
-        self.indent = indent
         self.json = {}
-
-    def __enter__(self):
-        self.read()
-        return self
-
-    def __exit__(self, *_):
-        self.write(indent=self.indent)
 
     def __getitem__(self, item):
         """Conditionally loads the configuration
@@ -88,28 +80,12 @@ class JSONParser(AlertParser):
         self.load()
         return self.json[item]
 
-    def __setitem__(self, item, value):
-        """Sets the respective item to the JSON dictionary."""
-        self.json[item] = value
-
-    def __getattr__(self, attr):
-        """Returns the respective config item."""
-        return getattr(self.json, attr)
-
-    def __str__(self):
-        return dumps(self.json)
-
     def read(self, filename, encoding=None):
         """Reads the JSON data from the files."""
         try:
             with open(str(filename), 'r', encoding=encoding) as file:
-                self.json.update(load(file))
+                self.json = load(file)
         except (FileNotFoundError, PermissionError, ValueError):
             return False
 
         return True
-
-    def write(self, indent=2):
-        """Reads the JSON data from the file."""
-        with open(self.file, 'w', encoding=self.encoding) as file:
-            file.write(dumps(self.json, indent=indent))
