@@ -80,6 +80,13 @@ class JSONParser(AlertParser):
         self.load()
         return self.json[item]
 
+    def __getattr__(self, attr):
+        """Conditionally loads the configuration
+        file and delegates to the JSON dictionary.
+        """
+        self.load()
+        return getattr(self.json, attr)
+
     def read(self, filename, encoding=None):
         """Reads the JSON data from the files."""
         try:
