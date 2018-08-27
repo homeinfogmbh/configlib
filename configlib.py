@@ -5,7 +5,24 @@ from configparser import ConfigParser
 from json import load
 
 
-__all__ = ['INIParser', 'JSONParser']
+__all__ = ['parse_bool', 'INIParser', 'JSONParser']
+
+
+BOOLEAN_STRINGS = {
+    'true': True, 'yes': True, 'y': True, 'on': True, '1': True,
+    'false': False, 'no': False, 'n': False, 'off': False, '0': False}
+
+
+def parse_bool(value):
+    """Parses a boolean value from a config entry string."""
+
+    if value is None:
+        return False
+
+    if isinstance(value, bool):
+        return value
+
+    return BOOLEAN_STRINGS.get(value.strip().lower())
 
 
 class AlertParser:
@@ -49,7 +66,7 @@ class AlertParser:
         raise NotImplementedError()
 
 
-class INIParser(ConfigParser, AlertParser):
+class INIParser(ConfigParser, AlertParser):     # pylint: disable=R0901
     """Parses INI-ish configuration files."""
 
     def __init__(self, file, encoding=None, alert=False, **kwargs):
