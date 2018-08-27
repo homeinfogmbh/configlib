@@ -17,7 +17,7 @@ def parse_bool(value):
     """Parses a boolean value from a config entry string."""
 
     if value is None:
-        return False
+        return None
 
     if isinstance(value, bool):
         return value
