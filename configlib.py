@@ -2,7 +2,7 @@
 
 from configparser import ConfigParser
 from json import load
-from os.path import getmtime
+from os.path import expanduser, getmtime
 from pathlib import Path
 
 
@@ -24,7 +24,8 @@ def loadcfg(filename, *args, **kwargs):
         config_file = config_dir.joinpath(filename)
         config_parser.read(str(config_file))
 
-    personal_config_file = Path.home().joinpath('.{}'.format(filename))
+    home = Path(expanduser('~'))
+    personal_config_file = home.joinpath('.{}'.format(filename))
     config_parser.read(str(personal_config_file))
     return config_parser
 
