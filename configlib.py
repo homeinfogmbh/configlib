@@ -1,6 +1,7 @@
 """Configuration file parsing library."""
 
 from configparser import ConfigParser
+from itertools import chain
 from json import load
 from os.path import getmtime
 from pathlib import Path
@@ -19,13 +20,12 @@ def loadcfg(filename, *args, **kwargs):
     """Loads the files from common locations."""
 
     config_parser = ConfigParser(*args, **kwargs)
+    personal_config_file = Path.home().joinpath('.{}'.format(filename))
 
-    for config_dir in CONFIG_DIRS:
+    for config_dir in chain(CONFIG_DIRS, (personal_config_file,)):
         config_file = config_dir.joinpath(filename)
         config_parser.read(str(config_file))
 
-    personal_config_file = Path.home().joinpath('.{}'.format(filename))
-    config_parser.read(str(personal_config_file))
     return config_parser
 
 
