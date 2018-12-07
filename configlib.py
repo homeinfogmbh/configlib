@@ -24,9 +24,8 @@ def loadcfg(filename, *args, **kwargs):
         config_file = config_dir.joinpath(filename)
         config_parser.read(str(config_file))
 
-    hidden_filename = '.{}'.format(filename)
-    personal_config_file = Path.home().joinpath(hidden_filename)
-    config_parser.read(personal_config_file)
+    personal_config_file = Path.home().joinpath('.{}'.format(filename))
+    config_parser.read(str(personal_config_file))
     return config_parser
 
 
