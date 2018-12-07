@@ -15,10 +15,10 @@ BOOLEAN_STRINGS = {
 CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
 
 
-def loadcfg(filename, *args, **kwargs):
+def loadcfg(filename, *args, interpolation=False, **kwargs):
     """Loads the files from common locations."""
 
-    config_parser = ConfigParser(*args, **kwargs)
+    config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
 
     for config_dir in CONFIG_DIRS:
         config_file = config_dir.joinpath(filename)
