@@ -6,12 +6,28 @@ from os.path import getmtime
 from pathlib import Path
 
 
-__all__ = ['parse_bool', 'INIParser', 'JSONParser']
+__all__ = ['loadcfg', 'parse_bool', 'INIParser', 'JSONParser']
 
 
 BOOLEAN_STRINGS = {
     'true': True, 'yes': True, 'y': True, 'on': True, '1': True,
     'false': False, 'no': False, 'n': False, 'off': False, '0': False}
+CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
+
+
+def loadcfg(filename, *args, **kwargs):
+    """Loads the files from common locations."""
+
+    config_parser = ConfigParser(*args, **kwargs)
+
+    for config_dir in CONFIG_DIRS:
+        config_file = config_dir.joinpath(filename)
+        config_parser.read(str(config_file))
+
+    hidden_filename = '.{}'.format(filename)
+    personal_config_file = Path.home().joinpath(hidden_filename)
+    config_parser.read(personal_config_file)
+    return config_parser
 
 
 def parse_bool(value):
