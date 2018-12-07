@@ -2,133 +2,60 @@
 
 from configparser import ConfigParser
 from json import load
-from os.path import expanduser, getmtime
+from os.path import expanduser
 from pathlib import Path
 
 
-__all__ = ['loadcfg', 'parse_bool', 'INIParser', 'JSONParser']
+__all__ = ['posix_paths', 'load_ini', 'loadcfg', 'load_json']
 
 
-BOOLEAN_STRINGS = {
-    'true': True, 'yes': True, 'y': True, 'on': True, '1': True,
-    'false': False, 'no': False, 'n': False, 'off': False, '0': False}
-CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
+POSIX_CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
 
 
-def loadcfg(filename, *args, interpolation=None, **kwargs):
-    """Loads the files from common locations."""
+def posix_paths(filename):
+    """Yields POSIX search paths for the respective filename."""
+
+    file = Path(filename)
+
+    if file.is_absolute():
+        yield file
+        return
+
+    for config_dir in POSIX_CONFIG_DIRS:
+        yield config_dir.joinpath(file)
+
+    home = Path(expanduser('~'))
+    yield home.joinpath('.{}'.format(filename))
+
+
+def load_ini(filename, *args, interpolation=None, **kwargs):
+    """Loads the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
 
-    for config_dir in CONFIG_DIRS:
-        config_file = config_dir.joinpath(filename)
-        config_parser.read(str(config_file))
+    for posix_path in posix_paths(filename):
+        config_parser.read(str(posix_path))
 
-    home = Path(expanduser('~'))
-    personal_config_file = home.joinpath('.{}'.format(filename))
-    config_parser.read(str(personal_config_file))
     return config_parser
 
 
-def parse_bool(value):
-    """Parses a boolean value from a config entry string."""
-
-    if value is None:
-        return None
-
-    if isinstance(value, bool):
-        return value
-
-    return BOOLEAN_STRINGS.get(value.strip().lower())
+loadcfg = load_ini  # pylint: disable=C0103
 
 
-class AlertParserMixin:
-    """Abstract configuration file parser that recognizes file changes."""
+def load_json(filename):
+    """Loads the respective JSON config file from POSIX search paths."""
 
-    def __init__(self, file, encoding=None, alert=False):
-        """Initializes the parser with the target file.
+    json_config = {}
 
-        Optionally the configuration can be set to be alert to
-        file modification time changes to reload it accordingly.
-        """
-        self.file = Path(file)
-        self.encoding = encoding
-        self.alert = alert
-        self.mtime = None
-
-    @property
-    def loaded(self):
-        """Determines whether the configuration has been loaded."""
-        return self.mtime is not None
-
-    @property
-    def changed(self):
-        """Determines whether the configuration has changed on disk."""
-        return getmtime(self.file) > self.mtime
-
-    def load(self, force=False):
-        """Reads the configuration file if
-            1)  it was forced,
-            2)  it has not yet been loaded
-        or
-            3)  the Configuration is set to alert and
-                the file's timestamp changed.
-        """
-        if force or not self.loaded or self.alert and self.changed:
-            self.read(str(self.file), encoding=self.encoding)
-            self.mtime = getmtime(str(self.file))
-
-
-class INIParser(ConfigParser, AlertParserMixin):     # pylint: disable=R0901
-    """Parses INI-ish configuration files."""
-
-    def __init__(self, file, encoding=None, alert=False, **kwargs):
-        """Invokes super constructors."""
-        AlertParserMixin.__init__(self, file, encoding=encoding, alert=alert)
-        ConfigParser.__init__(self, **kwargs)
-
-    def __getitem__(self, item):
-        """Conditionally loads the configuration
-        file and delegates to superclass.
-        """
-        self.load()
-        return super().__getitem__(item)
-
-    def read(self, filename, encoding=None):    # pylint: disable=W0221
-        """Reads the file."""
-        self.file = Path(filename)
-        return super().read(filename, encoding=encoding)
-
-
-class JSONParser(AlertParserMixin):
-    """Parses JSON-ish configuration files."""
-
-    def __init__(self, file, encoding=None, alert=False):
-        """Invokes super constructor and sets inital JSON data."""
-        super().__init__(file, encoding=encoding, alert=alert)
-        self.json = {}
-
-    def __getitem__(self, item):
-        """Conditionally loads the configuration
-        file and delegates to the JSON dictionary.
-        """
-        self.load()
-        return self.json[item]
-
-    def __getattr__(self, attr):
-        """Conditionally loads the configuration
-        file and delegates to the JSON dictionary.
-        """
-        self.load()
-        return getattr(self.json, attr)
-
-    def read(self, filename, encoding=None):
-        """Reads the JSON data from the files."""
+    for posix_path in posix_paths(filename):
         try:
-            with open(str(filename), 'r', encoding=encoding) as file:
-                self.json = load(file)
-        except (FileNotFoundError, PermissionError, ValueError):
-            return False
+            with posix_path.open('r') as json:
+                json = load(json)
+        except FileNotFoundError:
+            continue
+        except PermissionError:
+            continue
 
-        self.file = Path(filename)
-        return True
+        json_config.update(json)
+
+    return json_config
