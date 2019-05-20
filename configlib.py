@@ -46,7 +46,7 @@ def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     return config_parser
 
 
-def load_json(filename, encoding=None):
+def load_json(filename, *, encoding=None):
     """Loads the respective JSON config file from POSIX search paths."""
 
     json_config = {}
