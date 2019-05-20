@@ -46,14 +46,14 @@ def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     return config_parser
 
 
-def load_json(filename):
+def load_json(filename, encoding=None):
     """Loads the respective JSON config file from POSIX search paths."""
 
     json_config = {}
 
     for posix_path in posix_paths(filename):
         try:
-            with posix_path.open('r') as json:
+            with posix_path.open('r', encoding=encoding) as json:
                 json = load(json)
         except FileNotFoundError:
             continue
@@ -66,10 +66,10 @@ def load_json(filename):
     return json_config
 
 
-def loadcfg(filename, *args, **kwargs):
+def loadcfg(filename, *args, encoding=None, **kwargs):
     """Loads the respective config file."""
 
     if Path(filename).suffix == '.json':
-        return load_json(filename)
+        return load_json(filename, encoding=encoding)
 
-    return load_ini(filename, *args, **kwargs)
+    return load_ini(filename, *args, encoding=encoding, **kwargs)
