@@ -46,9 +46,6 @@ def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     return config_parser
 
 
-loadcfg = load_ini  # pylint: disable=C0103
-
-
 def load_json(filename):
     """Loads the respective JSON config file from POSIX search paths."""
 
@@ -67,3 +64,12 @@ def load_json(filename):
         json_config.update(json)
 
     return json_config
+
+
+def loadcfg(filename, *args, **kwargs):
+    """Loads the respective config file."""
+
+    if Path(filename).suffix == '.json':
+        return load_json(filename)
+
+    return load_ini(filename, *args, **kwargs)
