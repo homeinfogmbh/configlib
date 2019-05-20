@@ -13,6 +13,12 @@ POSIX_CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
 LOGGER = getLogger(__file__)
 
 
+def log_load(path):
+    """Logs the successful loading of the respective path."""
+
+    LOGGER.debug('Loaded config file: %s', path)
+
+
 def posix_paths(filename):
     """Yields POSIX search paths for the respective filename."""
 
@@ -35,7 +41,7 @@ def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     loaded = config_parser.read(posix_paths(filename), encoding=encoding)
 
     for path in loaded:
-        LOGGER.debug('Loaded config file: %s', path)
+        log_load(path)
 
     return config_parser
 
@@ -57,7 +63,7 @@ def load_json(filename):
         except PermissionError:
             continue
 
-        LOGGER.debug('Loaded config file: %s', posix_path)
+        log_load(posix_path)
         json_config.update(json)
 
     return json_config
