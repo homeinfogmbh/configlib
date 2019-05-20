@@ -2,7 +2,7 @@
 
 from configparser import ConfigParser
 from json import load
-from os.path import expanduser
+from logging import getLogger
 from pathlib import Path
 
 
@@ -10,6 +10,7 @@ __all__ = ['posix_paths', 'load_ini', 'loadcfg', 'load_json']
 
 
 POSIX_CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
+LOGGER = getLogger(__file__)
 
 
 def posix_paths(filename):
@@ -24,17 +25,18 @@ def posix_paths(filename):
     for config_dir in POSIX_CONFIG_DIRS:
         yield config_dir.joinpath(file)
 
-    home = Path(expanduser('~'))
+    home = Path.home()
     yield home.joinpath('.{}'.format(filename))
 
 
-def load_ini(filename, *args, interpolation=None, **kwargs):
+def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     """Loads the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
+    loaded = config_parser.read(posix_paths(filename), encoding=encoding)
 
-    for posix_path in posix_paths(filename):
-        config_parser.read(str(posix_path))
+    for path in loaded:
+        LOGGER.debug('Loaded config file: %s', path)
 
     return config_parser
 
@@ -56,6 +58,7 @@ def load_json(filename):
         except PermissionError:
             continue
 
+        LOGGER.debug('Loaded config file: %s', posix_path)
         json_config.update(json)
 
     return json_config
