@@ -6,7 +6,7 @@ from logging import getLogger
 from pathlib import Path
 
 
-__all__ = ['posix_paths', 'load_ini', 'loadcfg', 'load_json']
+__all__ = ['posix_paths', 'load_ini', 'load_json', 'loadcfg']
 
 
 POSIX_CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
