@@ -25,8 +25,7 @@ def posix_paths(filename):
     for config_dir in POSIX_CONFIG_DIRS:
         yield config_dir.joinpath(file)
 
-    home = Path.home()
-    yield home.joinpath('.{}'.format(filename))
+    yield Path.home().joinpath('.{}'.format(filename))
 
 
 def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
