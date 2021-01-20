@@ -4,22 +4,24 @@ from configparser import ConfigParser
 from json import load
 from logging import getLogger
 from pathlib import Path
+from typing import Iterator, Optional, Union
 
 
 __all__ = ['posix_paths', 'load_ini', 'load_json', 'loadcfg']
 
 
-POSIX_CONFIG_DIRS = (Path('/etc'), Path('/usr/local/etc'))
-LOGGER = getLogger(__file__)
+JSON = Union[dict, list, str, int, float, bool, None]
+POSIX_CONFIG_DIRS = [Path('/etc'), Path('/usr/local/etc')]
+LOGGER = getLogger('configlib')
 
 
-def log_load(path):
+def log_load(path: Union[Path, str]) -> None:
     """Logs the successful loading of the respective path."""
 
     LOGGER.debug('Loaded config file: %s', path)
 
 
-def posix_paths(filename):
+def posix_paths(filename: str) -> Iterator[Path]:
     """Yields POSIX search paths for the respective filename."""
 
     file = Path(filename)
@@ -31,10 +33,11 @@ def posix_paths(filename):
     for config_dir in POSIX_CONFIG_DIRS:
         yield config_dir.joinpath(file)
 
-    yield Path.home().joinpath('.{}'.format(filename))
+    yield Path.home().joinpath(f'.{filename}')
 
 
-def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
+def load_ini(filename: str, *args, encoding: Optional[str] = None,
+             interpolation: Optional[type] = None, **kwargs) -> ConfigParser:
     """Loads the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
@@ -46,7 +49,7 @@ def load_ini(filename, *args, encoding=None, interpolation=None, **kwargs):
     return config_parser
 
 
-def load_json(filename, *, encoding=None):
+def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
     """Loads the respective JSON config file from POSIX search paths."""
 
     json_config = {}
@@ -66,7 +69,8 @@ def load_json(filename, *, encoding=None):
     return json_config
 
 
-def loadcfg(filename, *args, encoding=None, **kwargs):
+def loadcfg(filename: str, *args, encoding: Optional[str] = None,
+            **kwargs) -> Union[ConfigParser, JSON]:
     """Loads the respective config file."""
 
     if Path(filename).suffix == '.json':
