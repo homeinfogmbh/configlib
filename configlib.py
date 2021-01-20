@@ -3,14 +3,16 @@
 from configparser import ConfigParser
 from json import load
 from logging import getLogger
+from os import name, getenv
 from pathlib import Path
 from typing import Iterator, Optional, Union
 
 
-__all__ = ['posix_paths', 'load_ini', 'load_json', 'loadcfg']
+__all__ = ['load_ini', 'load_json', 'loadcfg', 'search_paths']
 
 
 JSON = Union[dict, list, str, int, float, bool, None]
+NT_ENV_PATH_VARS = ['%LOCALAPPDATA%', '%APPDATA%']
 POSIX_CONFIG_DIRS = [Path('/etc'), Path('/usr/local/etc')]
 LOGGER = getLogger('configlib')
 
@@ -21,7 +23,7 @@ def log_load(path: Union[Path, str]) -> None:
     LOGGER.debug('Loaded config file: %s', path)
 
 
-def posix_paths(filename: str) -> Iterator[Path]:
+def search_paths(filename: str) -> Iterator[Path]:
     """Yields POSIX search paths for the respective filename."""
 
     file = Path(filename)
@@ -30,7 +32,14 @@ def posix_paths(filename: str) -> Iterator[Path]:
         yield file
         return
 
-    for config_dir in POSIX_CONFIG_DIRS:
+    if name == 'posix':
+        config_dirs = POSIX_CONFIG_DIRS
+    elif name == 'nt':
+        config_dirs = [Path(getenv(var)) for var in NT_ENV_PATH_VARS]
+    else:
+        raise NotImplementedError(f'Unsupported operating system: {name}')
+
+    for config_dir in config_dirs:
         yield config_dir.joinpath(file)
 
     yield Path.home().joinpath(f'.{filename}')
@@ -41,9 +50,8 @@ def load_ini(filename: str, *args, encoding: Optional[str] = None,
     """Loads the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
-    loaded = config_parser.read(posix_paths(filename), encoding=encoding)
 
-    for path in loaded:
+    for path in config_parser.read(search_paths(filename), encoding=encoding):
         log_load(path)
 
     return config_parser
@@ -54,16 +62,16 @@ def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
 
     json_config = {}
 
-    for posix_path in posix_paths(filename):
+    for path in search_paths(filename):
         try:
-            with posix_path.open('r', encoding=encoding) as json:
+            with path.open('r', encoding=encoding) as json:
                 json = load(json)
         except FileNotFoundError:
             continue
         except PermissionError:
             continue
 
-        log_load(posix_path)
+        log_load(path)
         json_config.update(json)
 
     return json_config
