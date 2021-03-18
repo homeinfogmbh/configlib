@@ -18,7 +18,7 @@ LOGGER = getLogger('configlib')
 
 
 class DeferredConfigProxy:
-    """Proxy to access a configuration object with delayed file loading."""
+    """Proxy to access a configuration object with deferred file loading."""
 
     def __init__(self, filename: Union[Path, str], **kwargs):
         """Sets the config file path."""
