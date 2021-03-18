@@ -5,16 +5,49 @@ from json import load
 from logging import getLogger
 from os import name, getenv
 from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Union
 
 
-__all__ = ['load_ini', 'load_json', 'loadcfg', 'search_paths']
+__all__ = ['loadcfg']
 
 
 JSON = Union[dict, list, str, int, float, bool, None]
 NT_ENV_PATH_VARS = ['%LOCALAPPDATA%', '%APPDATA%']
 POSIX_CONFIG_DIRS = [Path('/etc'), Path('/usr/local/etc')]
 LOGGER = getLogger('configlib')
+
+
+class DeferredConfigProxy:
+    """Proxy to access a configuration object with delayed file loading."""
+
+    def __init__(self, filename: Union[Path, str], **kwargs):
+        """Sets the config file path."""
+        self.filename = Path(filename)
+        self.kwargs = kwargs
+        self.config_object = None
+
+    @property
+    def loaded(self) -> bool:
+        """Determines whether the configuration has been loaded."""
+        return self.config_object is not None
+
+    def load(self, *, force: bool = False) -> bool:
+        """Loads the configuration file."""
+        if force or self.config_object is None:
+            self.config_object = load_config(self.filename, **self.kwargs)
+            return True
+
+        return False
+
+    def __getitem__(self, key: str) -> Any:
+        """Delegates to the config object."""
+        self.load()
+        return self.config_object[key]
+
+    def __getattr__(self, attr: str) -> Any:
+        """Delegates to the config object."""
+        self.load()
+        return getattr(self.config_object, attr)
 
 
 def log_load(path: Union[Path, str]) -> None:
@@ -77,11 +110,16 @@ def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
     return json_config
 
 
-def loadcfg(filename: str, *args, encoding: Optional[str] = None,
-            **kwargs) -> Union[ConfigParser, JSON]:
+def load_config(filename: Path, **kwargs) -> Union[ConfigParser, JSON]:
     """Loads the respective config file."""
 
-    if Path(filename).suffix == '.json':
-        return load_json(filename, encoding=encoding)
+    if filename.suffix == '.json':
+        return load_json(filename, **kwargs)
 
-    return load_ini(filename, *args, encoding=encoding, **kwargs)
+    return load_ini(filename, **kwargs)
+
+
+def loadcfg(filename: str, **kwargs) -> DeferredConfigProxy:
+    """Loads the respective config file."""
+
+    return DeferredConfigProxy(filename, **kwargs)
