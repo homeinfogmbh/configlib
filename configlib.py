@@ -5,7 +5,7 @@ from json import load
 from logging import getLogger
 from os import name, getenv
 from pathlib import Path
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Tuple, Union
 
 
 __all__ = ['loadcfg']
@@ -26,19 +26,6 @@ class DeferredConfigProxy:
         self.kwargs = kwargs
         self.config_object = None
 
-    @property
-    def loaded(self) -> bool:
-        """Determines whether the configuration has been loaded."""
-        return self.config_object is not None
-
-    def load(self, *, force: bool = False) -> bool:
-        """Loads the configuration file."""
-        if force or self.config_object is None:
-            self.config_object = load_config(self.filename, **self.kwargs)
-            return True
-
-        return False
-
     def __getitem__(self, key: str) -> Any:
         """Delegates to the config object."""
         self.load()
@@ -48,6 +35,29 @@ class DeferredConfigProxy:
         """Delegates to the config object."""
         self.load()
         return getattr(self.config_object, attr)
+
+    @property
+    def loaded(self) -> bool:
+        """Determines whether the configuration has been loaded."""
+        return self.config_object is not None
+
+    def items(self) -> Iterator[Tuple[Any, Any]]:
+        """Yields configuration items."""
+        for key in self.keys():
+            yield (key, self.config_object[key])
+
+    def keys(self) -> Iterator[Any]:
+        """Yields the keys."""
+        self.load()
+        return iter(self.config_object)
+
+    def load(self, *, force: bool = False) -> bool:
+        """Loads the configuration file."""
+        if force or self.config_object is None:
+            self.config_object = load_config(self.filename, **self.kwargs)
+            return True
+
+        return False
 
 
 def log_load(path: Union[Path, str]) -> None:
