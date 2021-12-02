@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Iterator, Optional, Tuple, Union
 
 
-__all__ = ['loadcfg']
+__all__ = ['loadcfg', 'search_paths']
 
 
 JSON = Union[dict, list, str, int, float, bool, None]
