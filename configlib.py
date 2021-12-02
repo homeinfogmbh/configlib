@@ -5,59 +5,17 @@ from json import load
 from logging import getLogger
 from os import name, getenv
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple, Union
+from typing import Iterable, Iterator, Optional, Union
 
 
-__all__ = ['loadcfg', 'search_paths']
+__all__ = ['load_config', 'load_ini', 'load_json', 'search_paths']
 
 
 JSON = Union[dict, list, str, int, float, bool, None]
 NT_ENV_PATH_VARS = ['%LOCALAPPDATA%', '%APPDATA%']
 POSIX_CONFIG_DIRS = [Path('/etc'), Path('/usr/local/etc')]
 LOGGER = getLogger('configlib')
-
-
-class DeferredConfigProxy:
-    """Proxy to access a configuration object with deferred file loading."""
-
-    def __init__(self, filename: Union[Path, str], **kwargs):
-        """Sets the config file path."""
-        self.filename = Path(filename)
-        self.kwargs = kwargs
-        self.config_object = None
-
-    def __getitem__(self, key: str) -> Any:
-        """Delegates to the config object."""
-        self.load()
-        return self.config_object[key]
-
-    def __getattr__(self, attr: str) -> Any:
-        """Delegates to the config object."""
-        self.load()
-        return getattr(self.config_object, attr)
-
-    @property
-    def loaded(self) -> bool:
-        """Determines whether the configuration has been loaded."""
-        return self.config_object is not None
-
-    def items(self) -> Iterator[Tuple[Any, Any]]:
-        """Yields configuration items."""
-        for key in self.keys():
-            yield (key, self.config_object[key])
-
-    def keys(self) -> Iterator[Any]:
-        """Yields the keys."""
-        self.load()
-        return iter(self.config_object)
-
-    def load(self, *, force: bool = False) -> bool:
-        """Loads the configuration file."""
-        if force or self.config_object is None:
-            self.config_object = load_config(self.filename, **self.kwargs)
-            return True
-
-        return False
+Config = Union[ConfigParser, JSON]
 
 
 def log_load(path: Union[Path, str]) -> None:
@@ -66,23 +24,26 @@ def log_load(path: Union[Path, str]) -> None:
     LOGGER.debug('Loaded config file: %s', path)
 
 
+def search_dirs() -> Iterable[Path]:
+    """Yields config search directories."""
+
+    if name == 'posix':
+        return list(POSIX_CONFIG_DIRS)
+
+    if name == 'nt':
+        return [Path(getenv(var)) for var in NT_ENV_PATH_VARS]
+
+    raise NotImplementedError(f'Unsupported operating system: {name}')
+
+
 def search_paths(filename: str) -> Iterator[Path]:
     """Yields POSIX search paths for the respective filename."""
 
-    file = Path(filename)
-
-    if file.is_absolute():
+    if (file := Path(filename)).is_absolute():
         yield file
         return
 
-    if name == 'posix':
-        config_dirs = POSIX_CONFIG_DIRS
-    elif name == 'nt':
-        config_dirs = [Path(getenv(var)) for var in NT_ENV_PATH_VARS]
-    else:
-        raise NotImplementedError(f'Unsupported operating system: {name}')
-
-    for config_dir in config_dirs:
+    for config_dir in search_dirs():
         yield config_dir.joinpath(file)
 
     yield Path.home().joinpath(f'.{filename}')
@@ -100,36 +61,34 @@ def load_ini(filename: str, *args, encoding: Optional[str] = None,
     return config_parser
 
 
+def load_json_file(path: Path, *, encoding: Optional[str] = None) -> JSON:
+    """Safely load a single JSOn file."""
+
+    try:
+        with path.open('r', encoding=encoding) as file:
+            json = load(file)
+    except (FileNotFoundError, PermissionError):
+        return {}
+
+    log_load(path)
+    return json
+
+
 def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
     """Loads the respective JSON config file from POSIX search paths."""
 
-    json_config = {}
+    json = {}
 
     for path in search_paths(filename):
-        try:
-            with path.open('r', encoding=encoding) as json:
-                json = load(json)
-        except FileNotFoundError:
-            continue
-        except PermissionError:
-            continue
+        json.update(load_json_file(path, encoding=encoding))
 
-        log_load(path)
-        json_config.update(json)
-
-    return json_config
+    return json
 
 
-def load_config(filename: Path, **kwargs) -> Union[ConfigParser, JSON]:
+def load_config(filename: Union[Path, str], **kwargs) -> Config:
     """Loads the respective config file."""
 
-    if filename.suffix == '.json':
+    if Path(filename).suffix == '.json':
         return load_json(filename, **kwargs)
 
     return load_ini(filename, **kwargs)
-
-
-def loadcfg(filename: str, **kwargs) -> DeferredConfigProxy:
-    """Loads the respective config file."""
-
-    return DeferredConfigProxy(filename, **kwargs)
