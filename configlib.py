@@ -44,9 +44,9 @@ def search_paths(filename: str) -> Iterator[Path]:
         return
 
     for config_dir in search_dirs():
-        yield config_dir.joinpath(file)
+        yield config_dir / file
 
-    yield Path.home().joinpath(f'.{filename}')
+    yield Path.home() / f'.{filename}'
 
 
 def load_ini(filename: str, *args, encoding: Optional[str] = None,
