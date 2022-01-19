@@ -1,8 +1,11 @@
 FILE_LIST = ./.installed_files.txt
 
-.PHONY: pull push clean install uninstall
+.PHONY: test pull push clean install uninstall
 
-default: | pull clean install
+default: | pull clean test install
+
+test:
+	@ pytest
 
 install:
 	@ ./setup.py install --record $(FILE_LIST)
