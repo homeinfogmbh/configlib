@@ -33,4 +33,4 @@ class TestLoadJSON(TestCase):
         self.assertIsInstance(self.json, dict)
 
     def test_value(self):
-        self.assertEqual(self.json, JSON)
+        self.assertDictEqual(self.json, JSON)
