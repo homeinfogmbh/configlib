@@ -49,8 +49,13 @@ def search_paths(filename: str) -> Iterator[Path]:
     yield Path.home() / f'.{filename}'
 
 
-def load_ini(filename: str, *args, encoding: Optional[str] = None,
-             interpolation: Optional[type] = None, **kwargs) -> ConfigParser:
+def load_ini(
+        filename: str,
+        *args,
+        encoding: Optional[str] = None,
+        interpolation: Optional[type] = None,
+        **kwargs
+) -> ConfigParser:
     """Load the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
