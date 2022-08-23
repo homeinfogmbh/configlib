@@ -19,13 +19,13 @@ Config = Union[ConfigParser, JSON]
 
 
 def log_load(path: Union[Path, str]) -> None:
-    """Logs the successful loading of the respective path."""
+    """Log the successful loading of the respective path."""
 
     LOGGER.debug('Loaded config file: %s', path)
 
 
 def search_dirs() -> Iterable[Path]:
-    """Yields config search directories."""
+    """Yield config search directories."""
 
     if name == 'posix':
         return list(POSIX_CONFIG_DIRS)
@@ -37,7 +37,7 @@ def search_dirs() -> Iterable[Path]:
 
 
 def search_paths(filename: str) -> Iterator[Path]:
-    """Yields POSIX search paths for the respective filename."""
+    """Yield POSIX search paths for the respective filename."""
 
     if (file := Path(filename)).is_absolute():
         yield file
@@ -51,7 +51,7 @@ def search_paths(filename: str) -> Iterator[Path]:
 
 def load_ini(filename: str, *args, encoding: Optional[str] = None,
              interpolation: Optional[type] = None, **kwargs) -> ConfigParser:
-    """Loads the respective INI file from POSIX search paths."""
+    """Load the respective INI file from POSIX search paths."""
 
     config_parser = ConfigParser(*args, interpolation=interpolation, **kwargs)
 
@@ -75,7 +75,7 @@ def load_json_file(path: Path, *, encoding: Optional[str] = None) -> JSON:
 
 
 def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
-    """Loads the respective JSON config file from POSIX search paths."""
+    """Load the respective JSON config file from POSIX search paths."""
 
     json = {}
 
@@ -86,7 +86,7 @@ def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
 
 
 def load_config(filename: Union[Path, str], **kwargs) -> Config:
-    """Loads the respective config file."""
+    """Load the respective config file."""
 
     if Path(filename).suffix == '.json':
         return load_json(filename, **kwargs)
