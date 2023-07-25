@@ -8,32 +8,32 @@ from pathlib import Path
 from typing import Iterable, Iterator, Optional, Union
 
 
-__all__ = ['load_config', 'load_ini', 'load_json', 'search_paths']
+__all__ = ["load_config", "load_ini", "load_json", "search_paths"]
 
 
 JSON = Union[dict, list, str, int, float, bool, None]
-NT_ENV_PATH_VARS = ['%LOCALAPPDATA%', '%APPDATA%']
-POSIX_CONFIG_DIRS = [Path('/etc'), Path('/usr/local/etc')]
-LOGGER = getLogger('configlib')
+NT_ENV_PATH_VARS = ["%LOCALAPPDATA%", "%APPDATA%"]
+POSIX_CONFIG_DIRS = [Path("/etc"), Path("/usr/local/etc")]
+LOGGER = getLogger("configlib")
 Config = Union[ConfigParser, JSON]
 
 
 def log_load(path: Union[Path, str]) -> None:
     """Log the successful loading of the respective path."""
 
-    LOGGER.debug('Loaded config file: %s', path)
+    LOGGER.debug("Loaded config file: %s", path)
 
 
 def search_dirs() -> Iterable[Path]:
     """Yield config search directories."""
 
-    if name == 'posix':
+    if name == "posix":
         return list(POSIX_CONFIG_DIRS)
 
-    if name == 'nt':
+    if name == "nt":
         return [Path(getenv(var)) for var in NT_ENV_PATH_VARS]
 
-    raise NotImplementedError(f'Unsupported operating system: {name}')
+    raise NotImplementedError(f"Unsupported operating system: {name}")
 
 
 def search_paths(filename: str) -> Iterator[Path]:
@@ -46,15 +46,15 @@ def search_paths(filename: str) -> Iterator[Path]:
     for config_dir in search_dirs():
         yield config_dir / file
 
-    yield Path.home() / f'.{filename}'
+    yield Path.home() / f".{filename}"
 
 
 def load_ini(
-        filename: str,
-        *args,
-        encoding: Optional[str] = None,
-        interpolation: Optional[type] = None,
-        **kwargs
+    filename: str,
+    *args,
+    encoding: Optional[str] = None,
+    interpolation: Optional[type] = None,
+    **kwargs,
 ) -> ConfigParser:
     """Load the respective INI file from POSIX search paths."""
 
@@ -70,7 +70,7 @@ def load_json_file(path: Path, *, encoding: Optional[str] = None) -> JSON:
     """Safely load a single JSOn file."""
 
     try:
-        with path.open('r', encoding=encoding) as file:
+        with path.open("r", encoding=encoding) as file:
             json = load(file)
     except (FileNotFoundError, PermissionError):
         return {}
@@ -93,7 +93,7 @@ def load_json(filename: str, *, encoding: Optional[str] = None) -> JSON:
 def load_config(filename: Union[Path, str], **kwargs) -> Config:
     """Load the respective config file."""
 
-    if Path(filename).suffix == '.json':
+    if Path(filename).suffix == ".json":
         return load_json(filename, **kwargs)
 
     return load_ini(filename, **kwargs)

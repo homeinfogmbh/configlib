@@ -12,7 +12,7 @@ class TestLoadConfig(TestCase):
     """Test load_config()."""
 
     def test_load_json(self):
-        with NamedTemporaryFile('w+', suffix='.json') as file:
+        with NamedTemporaryFile("w+", suffix=".json") as file:
             dump({}, file)
             file.flush()
             file.seek(0)
@@ -21,8 +21,8 @@ class TestLoadConfig(TestCase):
         self.assertIsInstance(json, dict)
 
     def test_load_ini(self):
-        with NamedTemporaryFile('w+', suffix='.ini') as file:
-            file.write('')
+        with NamedTemporaryFile("w+", suffix=".ini") as file:
+            file.write("")
             file.flush()
             file.seek(0)
             ini = load_config(file.name)
